@@ -1,32 +1,67 @@
-import React from "react";
-import JPlayer, {
-  initializeOptions,
-  Gui,
-  Audio,
-  Title,
-  FullScreen,
-  Mute,
-  Play,
-  VolumeBar,
-  CurrentTime,
-  BrowserUnsupported,
-} from "react-jplayer";
+import React, { useEffect, useState }from "react";
+import JPlayer, { initializeOptions, Gui, Audio, Title } from "react-jplayer";
+import { Mute, Play, VolumeBar, CurrentTime, BrowserUnsupported } from "react-jplayer";
+import API from "./controllers/api";
+
+
+const LivePlayer = () => {
+
+let [liveTitle, setLiveTitle] = useState(false);
+let [liveURL, setLiveURL] = useState(false);
+let [loading, setLoading] = useState(true);
+
+const config = {
+  headers: {
+    "Content-Type": "application/json",
+  },
+};
+
+const fetchliveurl = async () => {
+  try {
+    const res = await API.get("/getOptions/LIVE_URL", config);
+    setLiveURL(res.data.options[0].value)
+  } catch (err) {
+    console.log(err);
+    return false;
+  }
+};
+
+const fetchlivetitle = async () => {
+  try {
+    const res = await API.get("/getOptions/LIVE_TITLE", config);
+    setLiveTitle(res.data.options[0].value)
+  } catch (err) {
+    console.log(err);
+    return false;
+  }
+};
+
+useEffect(() => {
+  (async () => {
+    await fetchliveurl();
+    await fetchlivetitle();
+    setLoading(false);
+  })().catch(err => {
+    console.error(err);
+  });
+});
 
 const defaultOptions = {
   id: "LivePlayer",
   keyEnabled: true,
   verticalVolume: true,
   media: {
-    title: "ABC Jazz",
+    title: liveTitle,
     sources: {
-      mp3: "http://listen.radionomy.com/abc-jazz",
+      mp3: liveURL,
     },
   },
 };
 
 initializeOptions(defaultOptions);
 
-const LivePlayer = () => (
+  return (
+      !loading && (
   <JPlayer id={defaultOptions.id} className="jp-sleek">
     <Audio />
     <Gui>
@@ -47,16 +82,15 @@ const LivePlayer = () => (
             </div>
           </div>
         </div>
-        <FullScreen>
-          <i className="fa fa-expand fa-2x py-3 mx-3" />
-        </FullScreen>
         <div className="jp-title-container">
-          <Title />
+         <h3> <Title /> </h3> 
         </div>
       </div>
       <BrowserUnsupported />
     </Gui>
   </JPlayer>
+  )
 );
+};
 
 export default LivePlayer;

@@ -1,12 +1,12 @@
-import logo from "./logo.svg";
+import React, { useEffect, useState } from "react";
 import "./App.css";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { Container, Tab, Tabs } from "react-bootstrap";
+import { Container, Tab, Row, Col, Nav } from "react-bootstrap";
 import LivePlayer from "./livePlayer";
 import { Provider } from "react-redux";
+import API from "./controllers/api";
 import { createStore, combineReducers } from "redux";
 import { reducer as jPlayers } from "react-jplayer";
-
 // Styles the jPlayer to look nice
 import "react-jplayer/src/less/skins/sleek.less";
 // Styles Play/Pause/Mute etc when icons (<i />) are used for them
@@ -14,116 +14,134 @@ import "react-jplayer/src/less/controls/iconControls.less";
 
 const store = createStore(combineReducers({ jPlayers }));
 
-function App() {
+const App = () => {
+  let [schedules, setSchedules] = useState([]);
+  let [loading, setLoading] = useState(true);
+
+  const config = {
+    headers: {
+      "Content-Type": "application/json",
+    },
+  };
+
+  const fetchschedules = async () => {
+    try {
+      const res = await API.get("/getSchedules", config);
+      setSchedules(res.data);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const formatTime = (timeString) => {
+    var H = +timeString.substr(0, 2);
+    var h = H % 12 || 12;
+    var ampm = H < 12 || H === 24 ? " AM" : " PM";
+    return h + timeString.substr(2, 3) + ampm;
+  };
+
+  useEffect(() => {
+    (async () => {
+      await fetchschedules();
+      setLoading(false);
+    })().catch(err => {
+      console.error(err);
+    });
+  });
+
   return (
     <div className="App">
-      <Container className="mt-5 pt-5">
-        <Tabs
-          defaultActiveKey="profile"
-          id="uncontrolled-tab-example"
-          className="mb-3"
-        >
-          <Tab eventKey="home" title="Home">
-            <h2>Tabsss</h2>
-          </Tab>
-          <Tab eventKey="profile" title="Profile">
-            <h2>Profile</h2>
-          </Tab>
-          <Tab eventKey="contact" title="Contact">
-            <h2>Contact</h2>
-          </Tab>
-        </Tabs>
+      <div className="container-fluid px-0  bg-white">
+        <header className=" container d-flex flex-wrap justify-content-center py-2 mb-2 border-bottom">
+          <a
+            href="/"
+            className="d-flex align-items-center mb-2 mb-md-0 me-md-auto text-dark text-decoration-none"
+          >
+            <img
+              alt="banner"
+              src="https://apptest.elevationng.org/pistisnetwork2021/wp-content/uploads/2021/10/The-Pistis-Network-LOGOb-300H-min.png"
+              height={45}
+            />
+          </a>
+        </header>
+      </div>
 
-        <br />
-        <br />
-        <br />
-        <div className="mt-5">
-          <div class="d-flex align-items-start">
-            <div class="col-3">
-              <ul
-                className="nav nav-pills nav-justified flex-column mb-3 nav-tabs"
-                id="pills-tab"
-                role="tablist"
-              >
-                <li className="nav-item" role="presentation">
-                  <button
-                    className="nav-link py-4 border active"
-                    id="pills-home-tab"
-                    data-bs-toggle="pill"
-                    data-bs-target="#pills-home"
-                    type="button"
-                    role="tab"
-                    aria-controls="pills-home"
-                    aria-selected="true"
-                  >
-                    Home
-                  </button>
-                </li>
-                <li className="nav-item" role="presentation">
-                  <button
-                    className="nav-link py-4  border"
-                    id="pills-profile-tab"
-                    data-bs-toggle="pill"
-                    data-bs-target="#pills-profile"
-                    type="button"
-                    role="tab"
-                    aria-controls="pills-profile"
-                    aria-selected="false"
-                  >
-                    Profile
-                  </button>
-                </li>
-                <li className="nav-item" role="presentation">
-                  <button
-                    className="nav-link py-4  border"
-                    id="pills-contact-tab"
-                    data-bs-toggle="pill"
-                    data-bs-target="#pills-contact"
-                    type="button"
-                    role="tab"
-                    aria-controls="pills-contact"
-                    aria-selected="false"
-                  >
-                    Contact
-                  </button>
-                </li>
-              </ul>
-            </div>
-
-            <div className=" col-auto p-5 tab-content" id="pills-tabContent">
-              <div
-                className="tab-pane fade show active"
-                id="pills-home"
-                role="tabpanel"
-                aria-labelledby="pills-home-tab"
-              >
-                <h1>Hello Home</h1>
-              </div>
-              <div
-                className="tab-pane fade"
-                id="pills-profile"
-                role="tabpanel"
-                aria-labelledby="pills-profile-tab"
-              >
-                <h1>Hello Profile</h1>
-              </div>
-              <div
-                className="tab-pane fade"
-                id="pills-contact"
-                role="tabpanel"
-                aria-labelledby="pills-contact-tab"
-              >
-                <h1>Hello Contact</h1>
-              </div>
-            </div>
+      <div className="d-flex align-content-center">
+        <Container className="py-4">
+          <div className="text-center w-100 mt-5 mb-4">
+            <h2 className="h1 text-white display-3"> Schedule </h2>
           </div>
-        </div>
-      </Container>
+          <div className="d-flex justify-content-center">
+            {loading ? (
+              <div className="py-5">
+                <div class="spinner-border text-light" style={{ width : "5rem", height: "5rem" }} role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+                <h2 className="mt-3 text-light"> Loading .....</h2>
+              </div>
+            ) : (
+              <div className="col-lg-8" style={{ opacity: "0.9" }}>
+                <Tab.Container
+                  id="left-tabs-example"
+                  className="mx-5 shadow-lg rounded-3 bg-white"
+                  defaultActiveKey="0"
+                >
+                  <Row className="g-0 bg-white shadow-lg rounded-3 ">
+                    <Col
+                      sm={12}
+                      lg={3}
+                      className=""
+                      style={{ borderRight: "1px solid #e2e2e2" }}
+                    >
+                      <Nav variant="pills" className="flex-column">
+                        {Object.keys(schedules).map((key, index) => (
+                          <Nav.Item key={index}>
+                            <Nav.Link eventKey={index} className="py-4">
+                              {" "}
+                              {new Date(key).toDateString()}{" "}
+                            </Nav.Link>
+                          </Nav.Item>
+                        ))}
+                      </Nav>
+                    </Col>
+                    <Col sm={9} className="py-3 px-3 px-lg-4 py-lg-5">
+                      <Tab.Content>
+                        {Object.keys(schedules).map((key, index) => (
+                          <Tab.Pane key={index} eventKey={index}>
+                            {schedules[key].map((item, index) => (
+                              <div className="row my-3" key={index}>
+                                <div className="col-4 text-start">
+                                  <h6>
+                                    {formatTime(item.startTime)} -
+                                    {formatTime(item.endTime)}
+                                  </h6>
+                                </div>
+                                <div className="col-8 text-start">
+                                  <h5 className="fw-bold text-uppercase">
+                                    {item.title}
+                                  </h5>
+                                </div>
+                              </div>
+                            ))}
+                          </Tab.Pane>
+                        ))}
+                        <Tab.Pane eventKey="second">
+                          <h2> second</h2>
+                        </Tab.Pane>
+                      </Tab.Content>
+                    </Col>
+                  </Row>
+                </Tab.Container>
+              </div>
+            )}
+          </div>
+        </Container>
+      </div>
       <Provider store={store}>
         <LivePlayer />
       </Provider>
     </div>
   );
-}
+};
 
 export default App;
